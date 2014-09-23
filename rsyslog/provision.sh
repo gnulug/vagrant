@@ -59,7 +59,8 @@ local ORDER=$1
 echo -e "$ORDER Installing Rsyslog!\n"
 if ! rsyslogd -v | grep -q $RSYSLOG_VERSION
 then
-	apt-get update && sudo apt-get -y upgrade
+	apt-get update && apt-get -y upgrade
+	apt-get install -y cowsay zsh htop curl
 	apt-get install -y rsyslog rsyslog-relp
 else
 	hi "Rsyslog $RSYSLOG_VERSION already installed!"
@@ -79,7 +80,7 @@ if ! [ -d /var/spool/rsyslog ]; then
 fi
 
 if ! [ -f $RSYSLOG_CONFIG_DIR/50-lug.conf ]; then
-	cp $VAGRANT/lug.conf $RSYSLOG_CONFIG_DIR/50-lug.conf
+	mv $VAGRANT/lug.conf $RSYSLOG_CONFIG_DIR/50-lug.conf
 fi
 }
 
