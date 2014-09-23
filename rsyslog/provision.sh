@@ -48,7 +48,7 @@ function install_dependencies()
 local ORDER=$1
 echo -e "$ORDER Checking for dependencies!\n"
 if [ ! -f /etc/apt/sources.list.d/adiscon-v8-stable-trusty.list ]; then
-	add-apt-repository -y ppa:adiscon/v8-devel
+	add-apt-repository -y ppa:adiscon/v8-stable
 fi
 
 }
