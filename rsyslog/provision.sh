@@ -12,7 +12,6 @@ COWSAY=$(which cowsay 2>/dev/null)
 LOGFILE=rsyslog-install.log
 
 RSYSLOG_VERSION="8.4.0"
-RSYSLOG_CONFIG_DIR="/etc/rsyslog.d"
 
 exec > >(tee -a "$LOGFILE") 2>&1
 echo -e "\n --> Logging stdout & stderr to $LOGFILE"
@@ -80,7 +79,7 @@ if ! [ -d /var/spool/rsyslog ]; then
 fi
 
 if ! [ -f $RSYSLOG_CONFIG_DIR/50-lug.conf ]; then
-	mv $VAGRANT/lug.conf $RSYSLOG_CONFIG_DIR/50-lug.conf
+	mv $VAGRANT/rsyslog-lug.conf /etc/rsyslog.conf
 fi
 }
 
