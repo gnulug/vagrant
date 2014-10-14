@@ -21,10 +21,17 @@ then
 
         # Install Nagios Server
 
-	apt-get install apache2
-	apt-get install libapache2-mod-php5
-	apt-get install build-essential
-	apt-get install libgd2-xpm-dev
+	apt-get update -q
+	apt-get install -y -q apache2 libapache2-mod-php5 build-essential libgd-dev libgd2-xpm-dev mailx postfix
+
+	if ! getent passwd nagios 1>/dev/null 2>/dev/null
+	then
+		useradd -m -s /bin/bash nagios
+		echo "nagios:monitoringyourstuff" | chpasswd
+		groupadd nagcmd
+		usermod -a -G nagcmd nagios
+		usermod -a -G nagcmd www-data
+	fi
 
         if wget -O nagios-$VERSION.tar.gz $URL
         then
@@ -37,12 +44,9 @@ then
                 cd nagios-$VERSION
                 ./configure --with-nagios-user=nagios --with-command-group=nagcmd --enable-event-broker
                 make all && make install && make install-init && make install-commandmode &&
-                make install-config && make install-webconf && make install-exfoliation
-		groupadd nagcmd
-		usermod -a -G nagcmd nagios
-		usermod -a -G nagcmd www-data
-		htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
-		service nagios start
+                make install-config && make install-exfoliation
+		make webconf
+		#htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
         fi
 
         if [ $? -eq 0 ]
