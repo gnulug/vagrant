@@ -57,6 +57,7 @@ then
 		make install-brolive-config
 		#make install-sample-distros
 		#make install-sample-nsm
+		echo "demo:uiuclug" | chpasswd
 	else
 		die "Clone of islet repo failed"
 	fi
