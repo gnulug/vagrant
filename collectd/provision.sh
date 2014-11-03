@@ -51,10 +51,25 @@ COLLECTD_LUG=/etc/collectd/collectd.conf.d/lug.conf
 apt-get update -qq
 apt-get install -yq collectd
 grep -q "^LoadPlugin network" $COLLECTD || sed -i '/LoadPlugin network/s/^#//' $COLLECTD
+grep -q "^LoadPlugin write_graphite" $COLLECTD || sed -i '/LoadPlugin write_graphite/s/^#//' $COLLECTD
 if ! [ -f $COLLECTD_LUG ]; then
 cat <<EOF > $COLLECTD_LUG
 <Plugin "network">
-Listen "0.0.0.0" "25826"
+	Listen "0.0.0.0" "25826"
+</Plugin>
+
+<Plugin write_graphite>
+	<Node "collectd">
+		Host "localhost"
+		Port "2003"
+		Protocol "tcp"
+		LogSendErrors true
+		Prefix "collectd"
+		Postfix "collectd"
+		StoreRates true
+		AlwaysAppendDS false
+		EscapeCharacter "_"
+	</Node>
 </Plugin>
 
 LoadPlugin syslog
