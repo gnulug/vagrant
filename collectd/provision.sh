@@ -64,8 +64,6 @@ cat <<EOF > $COLLECTD_LUG
 		Port "2003"
 		Protocol "tcp"
 		LogSendErrors true
-		Prefix "collectd"
-		Postfix "collectd"
 		StoreRates true
 		AlwaysAppendDS false
 		EscapeCharacter "_"
