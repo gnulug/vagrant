@@ -141,6 +141,26 @@ EOF
 grep -q "^ENABLE_LOGROTATION = True" /etc/carbon/carbon.conf || sed -i '/^ENABLE_LOGROTATION/s/False/True/' /etc/carbon/carbon.conf
 grep -q "^CARBON_CACHE_ENABLED=true" /etc/default/graphite-carbon || sed -i '/^CARBON_CACHE_ENABLED/s/false/true/' /etc/default/graphite-carbon
 
+cat <<EOF > /etc/carbon/storage-schemas.conf
+# Schema definitions for Whisper files. Entries are scanned in order,
+# and first match wins. This file is scanned for changes every 60 seconds.
+#
+#  [name]
+#  pattern = regex
+#  retentions = timePerPoint:timeToStore, timePerPoint:timeToStore, ...
+
+# Carbon's internal metrics. This entry should match what is specified in
+# CARBON_METRIC_PREFIX and CARBON_METRIC_INTERVAL settings
+[carbon]
+pattern = ^carbon\.
+retentions = 60:90d
+
+
+[default]
+pattern = .*
+retentions = 5s:30d,1m:60d,5m:1y,10m:5y
+EOF
+
 /usr/bin/expect <<EOF
 spawn /usr/bin/graphite-manage syncdb
 expect "Would you like to create one now?"
