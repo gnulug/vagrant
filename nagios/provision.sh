@@ -9,6 +9,7 @@ DIR=/root
 HOST=$(hostname -s)
 IRCSAY=/usr/local/bin/ircsay
 EMAIL="user@company.com"
+export DEBIAN_FRONTEND=noninteractive
 
 if [ -f /usr/local/nagios/bin/nagios ]; then
         CHECK_VERSION=$(/usr/local/nagios/bin/nagios -V | grep ^Nagios)
