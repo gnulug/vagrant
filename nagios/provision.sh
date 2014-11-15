@@ -12,6 +12,7 @@ IRCSAY=/usr/local/bin/ircsay
 EMAIL="user@company.com"
 LIBEXEC=/usr/local/nagios/libexec
 CONFIG=/usr/local/nagios/etc
+SUDOERS=/etc/sudoers.d/nagios
 export DEBIAN_FRONTEND=noninteractive
 
 if [ -f /usr/local/nagios/bin/nagios ]; then
@@ -33,6 +34,14 @@ fi
 
 nagios_config(){
 rm -rf $CONFIG && git clone http://github.com/acmlug/nagios-config $CONFIG && service nagios restart
+[ ! -f $SUDOERS ] &&
+cat <<EOF > $SUDOERS
+# Do not require tty for user nagios (will fail otherwise)
+Defaults:nagios !requiretty
+
+# Allow user nagios to run nagios scripts as root
+nagios  ALL=(root) NOPASSWD:/usr/local/nagios/libexec/check_service.sh, /usr/local/nagios/libexec/eventhandlers/*
+EOF
 }
 
 if [[ "$CHECK_VERSION" != "Nagios Core $VERSION" ]]
