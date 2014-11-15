@@ -10,6 +10,8 @@ DIR=/root
 HOST=$(hostname -s)
 IRCSAY=/usr/local/bin/ircsay
 EMAIL="user@company.com"
+LIBEXEC=/usr/local/nagios/libexec
+CONFIG=/usr/local/nagios/etc
 export DEBIAN_FRONTEND=noninteractive
 
 if [ -f /usr/local/nagios/bin/nagios ]; then
@@ -18,13 +20,28 @@ else
         CHECK_VERSION="Not Found"
 fi
 
+install_plugins(){
+apt-get install -y --no-install-recommends nagios-nrpe-server nagios-plugins-standard nagios-nrpe-plugin &&
+echo -e "\nInstalled: nagios-nrpe-server nagios-plugins-standard nagios-nrpe-plugin\n"
+
+if [ -d /etc/nagios-plugins/ ]; then
+        rm -rf /etc/nagios-plugins/
+fi
+
+[ -f $LIBEXEC/README.md ] && cd $LIBEXEC && git pull || git clone http://github.com/jonschipp/nagios-plugins.git $LIBEXEC
+}
+
+nagios_config(){
+rm -rf $CONFIG && git clone http://github.com/acmlug/nagios-config $CONFIG && service nagios restart
+}
+
 if [[ "$CHECK_VERSION" != "Nagios Core $VERSION" ]]
 then
 
         # Install Nagios Server
 
 	apt-get update -q
-	apt-get install -yq build-essential libgd-dev libgd2-xpm-dev mailutils postfix apache2 apache2-utils libapache2-mod-php5
+	apt-get install -yq git build-essential libgd-dev libgd2-xpm-dev mailutils postfix apache2 apache2-utils libapache2-mod-php5
 
 	if ! getent passwd nagios 1>/dev/null 2>/dev/null
 	then
@@ -50,11 +67,11 @@ then
                 install -c -m 644 $HOME/nagios.conf /etc/apache2/sites-available/nagios.conf &&
                 install -c -m 644 $HOME/ports.conf /etc/apache2/ports.conf &&
 		make install-exfoliation && a2ensite nagios.conf && a2enmod cgi ssl &&
-                htpasswd -bc /usr/local/nagios/etc/htpasswd.users nagiosadmin badpassword &&
                 service apache2 restart &&
                 service nagios start
 
         fi
+
 
         if [ $? -eq 0 ]
         then
@@ -77,3 +94,6 @@ else
 		( set +e; $IRCSAY "#acmlug" "[shell] Nagios Core $VERSION already installed on ${HOST}, quitting." 2>/dev/null || true )
         fi
 fi
+
+install_plugins
+nagios_config
