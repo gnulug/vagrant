@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+HOME=/home/vagrant
 SUCCESS=0
 PLUGIN_SUCCESS=0
 VERSION=$(wget -O - http://www.nagios.org/download/core/thanks/?t=$(date +"%s") 2>/dev/null |
@@ -23,7 +24,7 @@ then
         # Install Nagios Server
 
 	apt-get update -q
-	apt-get install -yq build-essential libgd-dev libgd2-xpm-dev mailutils postfix apache2 libapache2-mod-php5
+	apt-get install -yq build-essential libgd-dev libgd2-xpm-dev mailutils postfix apache2 apache2-utils libapache2-mod-php5
 
 	if ! getent passwd nagios 1>/dev/null 2>/dev/null
 	then
@@ -46,10 +47,11 @@ then
                 ./configure --with-nagios-user=nagios --with-command-group=nagcmd --enable-event-broker
                 make all && make install && make install-init && make install-commandmode &&
                 make install-config &&
-		install -c -m 644 sample-config/httpd.conf /etc/apache2/sites-available/nagios.conf &&
-		ln -s /etc/apache2/sites-available/nagios.conf /etc/apache2/sites-enabled/nagios.conf &&
-		make install-exfoliation
-		#htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
+                install -c -m 644 $HOME/nagios.conf /etc/apache2/sites-available/nagios.conf &&
+                install -c -m 644 $HOME/ports.conf /etc/apache2/ports.conf &&
+		make install-exfoliation && a2ensite nagios.conf && a2enmod ssl &&
+                htpasswd -bc /usr/local/nagios/etc/htpasswd.users nagiosadmin badpassword && service apache2 restart
+
         fi
 
         if [ $? -eq 0 ]

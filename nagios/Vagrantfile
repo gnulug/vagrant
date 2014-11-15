@@ -8,12 +8,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.box = "trusty"
   config.vm.box_url = "https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
-  #config.vm.provision "file", source: "config", destination: "config"
-  config.vm.network "private_network", ip: "10.1.1.16", :netmask => "255.255.255.0", :adapter => 2
+  config.vm.provision "file", source: "apache-nagios.conf", destination: "nagios.conf"
+  config.vm.provision "file", source: "apache-ports.conf", destination: "ports.conf"
   config.vm.provision "shell", path: "provision.sh", privileged: "true"
+  config.vm.network "private_network", ip: "10.1.1.16", :netmask => "255.255.255.0", :adapter => 2
 
   # 1.) Will not work after provision script is ran because of new kernel lacking guest additions
-  config.vm.network "forwarded_port", guest: 80, host: 80
+  config.vm.network "forwarded_port", guest: 443, host: 8080
   # config.vm.synced_folder ".", "/vagrant"
   # 2.) Will work becuase guest additions isn't a requirement
   # config.vm.synced_folder ".", "/vagrant", type: "rsync",
