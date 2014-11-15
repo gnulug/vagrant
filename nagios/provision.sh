@@ -49,7 +49,7 @@ then
                 make install-config &&
                 install -c -m 644 $HOME/nagios.conf /etc/apache2/sites-available/nagios.conf &&
                 install -c -m 644 $HOME/ports.conf /etc/apache2/ports.conf &&
-		make install-exfoliation && a2ensite nagios.conf && a2enmod ssl &&
+		make install-exfoliation && a2ensite nagios.conf && a2enmod cgi ssl &&
                 htpasswd -bc /usr/local/nagios/etc/htpasswd.users nagiosadmin badpassword && service apache2 restart
 
         fi
