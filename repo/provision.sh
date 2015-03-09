@@ -115,6 +115,6 @@ start_daemons(){
 
 install_dependencies "1.)"
 configuration "2.)"
-start_daemons "2.)"
+start_daemons "3.)"
 
 hi "Configure hosts with: Acquire::http::Proxy http://${IP}:3142; > /etc/apt/apt.conf.d/01proxy"
