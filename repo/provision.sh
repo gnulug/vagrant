@@ -14,7 +14,7 @@ NET=$(ifconfig $NIC | grep 'inet addr:' | cut -d: -f3 | awk '{ print $1 }' | cut
 export DEBIAN_FRONTEND=noninteractive
 [ -e /etc/redhat-release ] && OS=el
 [ -e /etc/debian_version ] && OS=debian
-[ "$OS" = "debian" ] && PACKAGES="cowsay git apt-cacher apache2"
+[ "$OS" = "debian" ] && PACKAGES="cowsay git apt-cacher apache2 dpkg-dev"
 [ "$OS" = "el" ] && PACKAGES="cowsay git"
 
 # Installation notification
@@ -99,12 +99,21 @@ install_blah(){
 
 configuration(){
   hi "$1 $FUNCNAME\n"
+  local dir=/var/www/html/packages
   local config=/etc/apt-cacher/apt-cacher.conf
   sed -i '/AUTOSTART/s/0/1/' /etc/default/apt-cacher
   fgrep -q 'lug-l-admin' $config || echo 'admin_email = lug-l-admin@lists.illinois.edu' >> $config
   grep -q '^allowed' $config || echo "allowed_hosts = ${NET}.0/24" >> $config
-  echo "Acquire::http::Proxy \"http://${IP}:3142\";" > /etc/apt/apt.conf.d/01proxy
   /usr/share/apt-cacher/apt-cacher-import.pl -l /var/cache/apt/archives 2>/dev/null
+  mkdir -p $dir/{amd64,i386}
+cat <<EOF > $dir/update_repo.sh
+#!/usr/bin/env bash
+dir=$dir
+cd $dir
+dpkg-scanpackages amd64 | gzip -9c > amd64/Packages.gz
+dpkg-scanpackages i386  | gzip -9c > i386/Packages.gz
+EOF
+chmod 750 $dir/update_repo.sh
 }
 
 start_daemons(){
@@ -117,4 +126,8 @@ install_dependencies "1.)"
 configuration "2.)"
 start_daemons "3.)"
 
+# Configure client
+echo "Acquire::http::Proxy \"http://${IP}:3142\";" > /etc/apt/apt.conf.d/01proxy
+
 hi "Configure hosts with: Acquire::http::Proxy http://${IP}:3142; > /etc/apt/apt.conf.d/01proxy"
+hi "and /etc/apt/sources.list.d/lug.list: deb http://${IP}/packages/ amd64/"
