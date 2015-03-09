@@ -7,6 +7,7 @@
 NAME="vagrant"
 VAGRANT=/home/vagrant
 HOME=/root
+export DEBIAN_FRONTEND=noninteractive
 [ -e /etc/redhat-release ] && OS=el
 [ -e /etc/debian_version ] && OS=debian
 [ "$OS" = "debian" ] && PACKAGES="cowsay git build-essential"
