@@ -7,6 +7,15 @@
 NAME="vagrant"
 VAGRANT=/home/vagrant
 HOME=/root
+# Use for provisioning where network info is required
+NIC=eth1
+IP=$(ifconfig $NIC | grep 'inet addr:' | cut -d: -f2 | awk '{print $1}') # e.g. 10.1.1.2
+MASK=$(ifconfig $NIC | grep 'inet addr:' | cut -d: -f4 | awk '{ print $1 }') # e.g. 255.255.255.0
+BROADCAST=$(ifconfig $NIC | grep 'inet addr:' | cut -d: -f3 | awk '{ print $1 }') # e.g. #10.1.1.2555
+# I'm too lazy to do the math to get net and range, presuming /24
+NET=$(ifconfig $NIC | grep 'inet addr:' | cut -d: -f3 | awk '{ print $1 }' | cut -d . -f1-3) # e.g. 10.1.1
+BEGIN_RANGE=2
+END_RANGE=254
 export DEBIAN_FRONTEND=noninteractive
 [ -e /etc/redhat-release ] && OS=el
 [ -e /etc/debian_version ] && OS=debian
