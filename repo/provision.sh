@@ -114,6 +114,8 @@ dpkg-scanpackages amd64 | gzip -9c > amd64/Packages.gz
 dpkg-scanpackages i386  | gzip -9c > i386/Packages.gz
 EOF
 chmod 750 $dir/update_repo.sh
+chown -R root:www-data /var/cache/apt/archives/
+chmod -R 664 /var/cache/apt/archives/
 }
 
 start_daemons(){
