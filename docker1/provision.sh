@@ -90,27 +90,56 @@ install_dependencies(){
   package_check $PACKAGES
 }
 
-install_blah(){
-  hi "$1 $FUNCNAME\n"
-  if ! [ -d blah ]
-  then
-    rm -rf blah
-    git clone https://github.com/acmlug/blah || die "Clone of blah repo failed"
-    cd blah
-    ./configure && make && make install
+install_docker(){
+  is_ubuntu
+  hi "  Installing Docker!\n"
+
+  # Check that HTTPS transport is available to APT
+  if [ ! -e /usr/lib/apt/methods/https ]; then
+    apt-get update -qq
+    apt-get install -qy apt-transport-https
+    echo
   fi
-  cd $HOME
+
+  # Add the repository to your APT sources
+  # Then import the repository key
+  if [ ! -e /etc/apt/sources.list.d/docker.list ]
+  then
+    echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
+    echo
+  fi
+
+  # Install docker
+  if ! command -v docker >/dev/null 2>&1
+  then
+    apt-get update -qq
+    apt-get install -qy lxc-docker linux-image-extra-$(uname -r) aufs-tools
+  fi
 }
 
 configuration(){
   hi "$1 $FUNCNAME\n"
-  getent passwd blah 1>/dev/null || useradd blah --shell /sbin/nologin --home /
-  getent group blah | grep -q blahgroup || gpasswd -a blahgroup blah
-  chown -R blah:blah /var/log/blah /var/run/blah
-  [ -e /etc/blah.conf ] || (install -o root -g root -m 644 $VAGRANT/blah.conf \
-    /etc/blah.conf && restart blah)
+  [ -d /opt/influxdb ] || mkdir -p /opt/influxdb
+  docker pull jonschipp/influxdb
+  docker ps -a | grep -q influxdb ||
+    docker run --name="influxdb" --hostname="influxdb" -d -v /opt/influxdb/:/opt/influxdb/shared/data -p 80:80 -p 8083:8083 -p 8086:8086 -p 25826:25826/udp jonschipp/influxdb
+
+cat <<EOF > /etc/init/influxdb.conf
+description "InfluxDB container"
+author "Jon Schipp"
+start on filesystem and started docker
+stop on runlevel [!2345]
+respawn
+script
+  /usr/bin/docker start -a influxdb
+end script
+EOF
+
+  #docker run -d -p 8083:8083 -p 8086:8086 -p 8084:8084 -p 25826:25826/udp --name influxdb --expose 8090 --expose 8099 -e SSL_SUPPORT="True" -e PRE_CREATE_DB="collectd" -e UDP_DB="collectd" tutum/influxdb
+  #docker run -d -p 80:80 --name grafana -e HTTP_USER=admin -e HTTP_PASS=gnulug-grafana -e INFLUXDB_HOST=influxdb -e INFLUXDB_PORT=8086 -e INFLUXDB_NAME=collectd -e INFLUXDB_USER=root -e INFLUXDB_PASS=root -e INFLUXDB_IS_GRAFANADB=true --link influxdb:influxdb tutum/grafana
 }
 
 install_dependencies "1.)"
-#install_blah "2.)"
-#configuration "3.)"
+install_docker "2.)"
+configuration "3.)"
