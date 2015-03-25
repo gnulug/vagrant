@@ -74,7 +74,7 @@ echo -e "$ORDER Configuring the system for best use!\n"
 if ! [ -d /var/spool/rsyslog ]; then
 	mkdir -m 755 /var/spool/rsyslog
 fi
-if ! [ -d /var/spool/rsyslog ]; then
+if ! [ -d /impstats ]; then
 	mkdir -m 755 /impstats
 fi
 
@@ -85,6 +85,6 @@ fi
 
 install_dependencies "1.)"
 install_rsyslog "2.)"
-configuration "3.)"
+#configuration "3.)"
 
 service rsyslog restart
