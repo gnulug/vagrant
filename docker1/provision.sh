@@ -121,9 +121,13 @@ install_docker(){
 configuration(){
   hi "$1 $FUNCNAME\n"
   [ -d /opt/influxdb ] || mkdir -p /opt/influxdb
-  docker pull jonschipp/influxdb
-  docker ps -a | grep -q influxdb ||
-    docker run --name="influxdb" --hostname="influxdb" -d -v /opt/influxdb/:/opt/influxdb/shared/data -p 80:80 -p 8083:8083 -p 8086:8086 -p 25826:25826/udp jonschipp/influxdb
+  [ -d /opt/grafana ] || mkdir -p /opt/influxdb
+  [ -d tutum-docker-influxdb ] || git clone https://github.com/tutumcloud/tutum-docker-influxdb
+  cd tutum-docker-influxdb && sed -i 's/8086/8080/g' config.toml && docker built -t tutum/influxdb .
+  docker ps | fgrep "tutum/influxdb" ||
+    docker run -d --name influxdb -e PRE_CREATE_DB="collectd" -p 8083:8083 -p 8080:8080 -p 2003:2003 -p 25826:25826/udp --expose 8090 --expose 8099 -v /opt/influxdb/:/data  tutum/influxdb
+  docker ps | fgrep "grafana2" ||
+   docker run -d -i -p 80:80 --name grafana2 -e "GF_SERVER_HTTP_PORT=80" -e "GF_SECURITY_ADMIN_USER=admin" -e "GF_SECURITY_ADMIN_PASSWORD=admin" -v /opt/grafana/:/opt/grafana/data grafana/grafana:develop
 
 cat <<EOF > /etc/init/influxdb.conf
 description "InfluxDB container"
@@ -133,6 +137,17 @@ stop on runlevel [!2345]
 respawn
 script
   /usr/bin/docker start -a influxdb
+end script
+EOF
+
+cat <<EOF > /etc/init/grafana.conf
+description "Grafana container"
+author "Jon Schipp"
+start on filesystem and started docker
+stop on runlevel [!2345]
+respawn
+script
+  /usr/bin/docker start -a grafana2
 end script
 EOF
 
