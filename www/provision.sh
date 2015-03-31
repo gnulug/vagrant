@@ -20,7 +20,7 @@ WEB_DIR=/var/www/html
 export DEBIAN_FRONTEND=noninteractive
 [ -e /etc/redhat-release ] && OS=el
 [ -e /etc/debian_version ] && OS=debian
-[ "$OS" = "debian" ] && PACKAGES="cowsay git build-essential apache2"
+[ "$OS" = "debian" ] && PACKAGES="cowsay git build-essential apache2 awstats"
 [ "$OS" = "el" ] && PACKAGES="cowsay git"
 
 # Installation notification
@@ -96,15 +96,61 @@ install_website(){
   if ! [ -f $WEB_DIR/meetings.html ]
   then
     rm -f $WEB_DIR/*
-    cd $WEB_DIR && git clone https://github.com/acmlug/website .
+    cd $WEB_DIR && git clone https://github.com/open-nsm/website .
   fi
   cd $HOME
 }
 
 configuration(){
-  local cron=/etc/cron.d/lug
+  local cron=/etc/cron.d/nsm
+  local stats=/etc/awstats/awstats.conf.local
+  local web=/etc/apache2/sites-available/000-default.conf
   hi "$1 $FUNCNAME\n"
   [ -f $cron ] || printf "*/5 * * * * root cd $WEB_DIR && git pull\n" > $cron
+  [ -f $cron ] && fgrep awstats.pl $cron || printf "*/3 * * * * root /usr/lib/cgi-bin/awstats.pl -config=yourdomain.ext -update > /dev/null\n" > $cron
+  grep -q open-nsm $stats || printf 'SiteDomain="open-nsm.net"\n' >> $stats
+cat <<EOF > $web
+<VirtualHost *:80>
+        # The ServerName directive sets the request scheme, hostname and port that
+        # the server uses to identify itself. This is used when creating
+        # redirection URLs. In the context of virtual hosts, the ServerName
+        # specifies what hostname must appear in the request's Host: header to
+        # match this virtual host. For the default virtual host (this file) this
+        # value is not decisive as it is used as a last resort host regardless.
+        # However, you must set it for any further virtual host explicitly.
+        ServerName open-nsm.net
+
+        ServerAdmin webmaster@localhost
+        DocumentRoot /var/www/html
+
+        # Available loglevels: trace8, ..., trace1, debug, info, notice, warn,
+        # error, crit, alert, emerg.
+        # It is also possible to configure the loglevel for particular
+        # modules, e.g.
+        #LogLevel info ssl:warn
+
+        ErrorLog ${APACHE_LOG_DIR}/error.log
+        CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+        # For most configuration files from conf-available/, which are
+        # enabled or disabled at a global level, it is possible to
+        # include a line for only one particular virtual host. For example the
+        # following line enables the CGI configuration for this host only
+        # after it has been globally disabled with "a2disconf".
+        #Include conf-available/serve-cgi-bin.conf
+
+        # AWSStats
+        Alias /awstatsclasses "/usr/share/awstats/lib/"
+        Alias /awstats-icon "/usr/share/awstats/icon/"
+        Alias /awstatscss "/usr/share/doc/awstats/examples/css"
+        ScriptAlias /awstats/ /usr/lib/cgi-bin/
+        Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+
+</VirtualHost>
+EOF
+a2enmod cgi
+/usr/lib/cgi-bin/awstats.pl -config=open-nsm.net -update
+service apache2 restart
 }
 
 install_dependencies "1.)"

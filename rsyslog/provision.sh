@@ -78,8 +78,8 @@ if ! [ -d /impstats ]; then
 	mkdir -m 755 /impstats
 fi
 
-if ! [ -f $RSYSLOG_CONFIG_DIR/50-lug.conf ]; then
-	mv $VAGRANT/rsyslog-lug.conf /etc/rsyslog.conf
+if ! [ -f $RSYSLOG_CONFIG_DIR/50-nsm.conf ]; then
+	mv $VAGRANT/rsyslog-nsm.conf /etc/rsyslog.conf
 fi
 }
 
